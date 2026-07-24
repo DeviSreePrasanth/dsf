@@ -1,2 +1,2 @@
 FROM alpine:latest
-CMD ["echo", "Hello from dsf via WIF deploy"]
+CMD ["echo", "Hello from dsf via WIF deploy version1"]
