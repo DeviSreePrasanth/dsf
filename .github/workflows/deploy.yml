@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/663118040756/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-deploy-sa@project-5052331c-acde-45d8-b54.iam.gserviceaccount.com'
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+
+      - name: Build and push image
+        run: |
+          docker build -t asia-south1-docker.pkg.dev/project-5052331c-acde-45d8-b54/udp-docker/myimage:${{ github.sha }} .
+          docker push asia-south1-docker.pkg.dev/project-5052331c-acde-45d8-b54/udp-docker/myimage:${{ github.sha }}
