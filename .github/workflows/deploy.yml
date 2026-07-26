@@ -9,23 +9,36 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  publish-whl:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build wheel
+        run: python -m build --wheel
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/663118040756/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-          service_account: 'github-deploy-sa@project-5052331c-acde-45d8-b54.iam.gserviceaccount.com'
+          workload_identity_provider: 'projects/663118040756/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+          service_account: 'gha-artifact-publisher@project-5052331c-acde-45d8-b54.iam.gserviceaccount.com'
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker auth
-        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+      - name: Get access token
+        run: echo "TOKEN=$(gcloud auth print-access-token)" >> $GITHUB_ENV
 
-      - name: Build and push image
+      - name: Publish to Artifact Registry
         run: |
-          docker build -t asia-south1-docker.pkg.dev/project-5052331c-acde-45d8-b54/udp-docker/myimage:${{ github.sha }} .
-          docker push asia-south1-docker.pkg.dev/project-5052331c-acde-45d8-b54/udp-docker/myimage:${{ github.sha }}
+          python -m twine upload \
+            --repository-url https://asia-south1-python.pkg.dev/project-5052331c-acde-45d8-b54/udp-python/ \
+            -u oauth2accesstoken -p "$TOKEN" \
+            dist/*.whl
