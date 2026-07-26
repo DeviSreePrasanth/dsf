@@ -45,7 +45,7 @@ jobs:
 
       - name: Publish to Artifact Registry
         run: |
-          python -m twine upload --skip-existing \
+          python -m twine upload \
             --repository-url https://asia-south1-python.pkg.dev/project-5052331c-acde-45d8-b54/udp-python/ \
             -u oauth2accesstoken -p "$TOKEN" \
             dist/*.whl
