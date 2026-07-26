@@ -22,6 +22,13 @@ jobs:
       - name: Install build tools
         run: pip install build twine
 
+      - name: Set unique version
+        run: |
+          NEW_VERSION="0.1.${{ github.run_number }}"
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+          echo "Building version $NEW_VERSION"
+          grep "^version" pyproject.toml
+
       - name: Build wheel
         run: python -m build --wheel
 
@@ -38,7 +45,7 @@ jobs:
 
       - name: Publish to Artifact Registry
         run: |
-          python -m twine upload \
+          python -m twine upload --skip-existing \
             --repository-url https://asia-south1-python.pkg.dev/project-5052331c-acde-45d8-b54/udp-python/ \
             -u oauth2accesstoken -p "$TOKEN" \
             dist/*.whl
